@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { ProductBrowser } from "@/components/ProductBrowser";
 import { getPublicProducts } from "@/lib/products";
 
