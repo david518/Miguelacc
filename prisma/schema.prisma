@@ -1,0 +1,142 @@
+// Prisma schema for Miguelacc project
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  SHIPPED
+  CANCELED
+}
+
+enum PaymentStatus {
+  WAITING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  ECPAY
+}
+
+enum ShippingMethod {
+  HOME_DELIVERY // 宅配
+  CVS_PICKUP    // 超商取貨（綠界物流）
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Category {
+  id         String             @id @default(cuid())
+  name       String
+  slug       String             @unique
+  products   ProductCategory[]
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+}
+
+model Product {
+  id              String             @id @default(cuid())
+  shopeeId        String?            @unique
+  name            String
+  description     String
+  thumbnailUrl    String?
+  imagesJson      String?            // JSON array of image URLs (overrides Shopee images)
+  shopeeUrl       String?            // Custom Shopee product URL override
+  basePrice       Int?
+  currency        String             @default("TWD")
+  isActive        Boolean            @default(true)
+  allowCvsPickup  Boolean            @default(false) // 是否可超商取貨（綠界物流）
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  variations      ProductVariation[]
+  categories      ProductCategory[]
+  orderItems      OrderItem[]
+}
+
+model ProductVariation {
+  id          String   @id @default(cuid())
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String
+  name        String
+  sku         String?
+  price       Int
+  stock       Int?     @default(0)
+  images      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orderItems  OrderItem[]
+}
+
+model ProductCategory {
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  category  Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@id([productId, categoryId])
+}
+
+model Order {
+  id               String       @id @default(cuid())
+  orderNumber      String       @unique
+  status           OrderStatus  @default(PENDING)
+  customerName     String
+  customerEmail    String
+  customerPhone    String?
+  shippingAddress  String?
+  note             String?
+  shippingMethod   ShippingMethod @default(HOME_DELIVERY)
+  cvsStoreId       String?      // 超商門市代號（綠界回傳 CVSStoreID）
+  cvsStoreName     String?      // 超商門市名稱
+  cvsStoreAddress  String?      // 超商門市地址
+  cvsLogisticsType String?      // 綠界 LogisticsSubType: UNIMARTC2C / FAMIC2C ...
+  subtotalOriginal Int
+  subtotalDiscount Int
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  items            OrderItem[]
+  payments         Payment[]
+}
+
+model OrderItem {
+  id                 String            @id @default(cuid())
+  order              Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId            String
+  product            Product           @relation(fields: [productId], references: [id])
+  productId          String
+  variation          ProductVariation? @relation(fields: [variationId], references: [id])
+  variationId        String?
+  variationName      String?
+  quantity           Int               @default(1)
+  priceOriginal      Int
+  priceDiscount      Int
+  createdAt          DateTime          @default(now())
+}
+
+model Payment {
+  id             String          @id @default(cuid())
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId        String
+  provider       PaymentProvider @default(ECPAY)
+  status         PaymentStatus   @default(WAITING)
+  transactionId  String?
+  rawResponse    Json?
+  amount         Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
