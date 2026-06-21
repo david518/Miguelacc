@@ -52,26 +52,31 @@ export function deriveCvsEligibility(base: Product): boolean {
 
 /** Fetch all DB overrides keyed by shopeeId (single query) */
 export async function getAllOverrides(): Promise<Map<string, ProductOverride>> {
-  const rows = await prisma.product.findMany({
-    where: { shopeeId: { not: null } },
-    select: {
-      shopeeId: true,
-      name: true,
-      description: true,
-      thumbnailUrl: true,
-      imagesJson: true,
-      shopeeUrl: true,
-      basePrice: true,
-      isActive: true,
-      allowCvsPickup: true,
-    },
-  });
+  try {
+    const rows = await prisma.product.findMany({
+      where: { shopeeId: { not: null } },
+      select: {
+        shopeeId: true,
+        name: true,
+        description: true,
+        thumbnailUrl: true,
+        imagesJson: true,
+        shopeeUrl: true,
+        basePrice: true,
+        isActive: true,
+        allowCvsPickup: true,
+      },
+    });
 
-  const map = new Map<string, ProductOverride>();
-  for (const row of rows) {
-    if (row.shopeeId) map.set(row.shopeeId, row as ProductOverride);
+    const map = new Map<string, ProductOverride>();
+    for (const row of rows) {
+      if (row.shopeeId) map.set(row.shopeeId, row as ProductOverride);
+    }
+    return map;
+  } catch (err) {
+    console.error("[getAllOverrides] DB error:", err);
+    return new Map();
   }
-  return map;
 }
 
 /** Fetch a single override by shopeeId (never throws — returns null on error) */
