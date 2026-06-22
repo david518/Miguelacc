@@ -1,11 +1,35 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { jwtVerify } from "jose";
 import { LayoutGrid } from "lucide-react";
 import { AdminNav } from "./AdminNav";
 
-export default function AdminDashboardLayout({
+const COOKIE_NAME = "admin_token";
+
+async function verifyAdminSession(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    if (!token) return false;
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return false;
+    await jwtVerify(token, new TextEncoder().encode(secret));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export default async function AdminDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const authenticated = await verifyAdminSession();
+  if (!authenticated) {
+    redirect("/admin/login");
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50">
       {/* Sidebar */}
