@@ -9,13 +9,18 @@ const COOKIE_NAME = "admin_token";
 async function verifyAdminSession(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
+    const all = cookieStore.getAll();
     const token = cookieStore.get(COOKIE_NAME)?.value;
+    console.log("[admin-layout] cookies:", all.map((c) => c.name), "has token:", !!token);
     if (!token) return false;
     const secret = process.env.JWT_SECRET;
+    console.log("[admin-layout] JWT_SECRET present:", !!secret);
     if (!secret) return false;
     await jwtVerify(token, new TextEncoder().encode(secret));
+    console.log("[admin-layout] JWT verified OK");
     return true;
-  } catch {
+  } catch (err) {
+    console.error("[admin-layout] verify failed:", err);
     return false;
   }
 }
@@ -32,7 +37,6 @@ export default async function AdminDashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50">
-      {/* Sidebar */}
       <aside className="flex w-56 shrink-0 flex-col border-r border-zinc-200 bg-white">
         <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-4">
           <LayoutGrid className="size-4 text-orange-500" />
@@ -45,8 +49,6 @@ export default async function AdminDashboardLayout({
         </div>
         <AdminNav />
       </aside>
-
-      {/* Main */}
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );

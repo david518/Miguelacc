@@ -25,9 +25,8 @@ export default function AdminLoginPage() {
       });
 
       if (res.ok) {
-        // Cookie is now in the browser — navigate to admin
-        router.push("/admin/products");
-        router.refresh();
+        // Hard navigation ensures the cookie is sent with the new request
+        window.location.href = "/admin/products";
         return;
       }
 
