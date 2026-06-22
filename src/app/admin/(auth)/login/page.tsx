@@ -1,12 +1,44 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { loginAction } from "./actions";
 
 export default function AdminLoginPage() {
-  const [state, action, pending] = useActionState(loginAction, undefined);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+      });
+
+      if (res.ok) {
+        // Cookie is now in the browser — navigate to admin
+        router.push("/admin/products");
+        router.refresh();
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      setError((data as { error?: string }).error ?? "登入失敗，請稍後再試。");
+    } catch {
+      setError("網路錯誤，請稍後再試。");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50">
@@ -18,7 +50,7 @@ export default function AdminLoginPage() {
           <h1 className="text-2xl font-semibold text-zinc-900">登入管理後台</h1>
         </div>
 
-        <form action={action} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="email"
@@ -55,9 +87,9 @@ export default function AdminLoginPage() {
             />
           </div>
 
-          {state?.error && (
+          {error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-              {state.error}
+              {error}
             </p>
           )}
 
