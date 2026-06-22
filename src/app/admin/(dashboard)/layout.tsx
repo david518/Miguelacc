@@ -9,18 +9,13 @@ const COOKIE_NAME = "admin_token";
 async function verifyAdminSession(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const all = cookieStore.getAll();
     const token = cookieStore.get(COOKIE_NAME)?.value;
-    console.log("[admin-layout] cookies:", all.map((c) => c.name), "has token:", !!token);
     if (!token) return false;
     const secret = process.env.JWT_SECRET;
-    console.log("[admin-layout] JWT_SECRET present:", !!secret);
     if (!secret) return false;
     await jwtVerify(token, new TextEncoder().encode(secret));
-    console.log("[admin-layout] JWT verified OK");
     return true;
-  } catch (err) {
-    console.error("[admin-layout] verify failed:", err);
+  } catch {
     return false;
   }
 }
