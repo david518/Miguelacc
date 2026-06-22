@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { saveProductAction } from "./actions";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +30,12 @@ export function ProductEditForm({
   isDbNative = false,
 }: Props) {
   const [state, action, pending] = useActionState(saveProductAction, undefined);
+
+  useEffect(() => {
+    if (state && "success" in state && state.success) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state]);
 
   return (
     <form action={action} className="space-y-5">

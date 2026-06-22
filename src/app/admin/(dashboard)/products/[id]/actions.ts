@@ -2,10 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export type SaveProductState =
-  | { success: true }
+  | { success: true; redirectTo: string }
   | { error: string }
   | undefined;
 
@@ -66,5 +65,5 @@ export async function saveProductAction(
   revalidatePath(`/products/${shopeeId}`);
   revalidatePath("/admin/products");
 
-  redirect(`/admin/products/${shopeeId}?saved=1`);
+  return { success: true, redirectTo: `/admin/products/${shopeeId}?saved=1` };
 }

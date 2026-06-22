@@ -2,9 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
-export type CreateProductState = { error: string } | undefined;
+export type CreateProductState =
+  | { success: true; redirectTo: string }
+  | { error: string }
+  | undefined;
 
 export async function createProductAction(
   _prev: CreateProductState,
@@ -46,5 +48,5 @@ export async function createProductAction(
   revalidatePath("/products");
   revalidatePath("/admin/products");
 
-  redirect(`/admin/products/${product.id}?saved=1`);
+  return { success: true, redirectTo: `/admin/products/${product.id}?saved=1` };
 }

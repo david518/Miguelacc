@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { createProductAction } from "./actions";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +9,12 @@ const inputCls =
 
 export function NewProductForm() {
   const [state, action, pending] = useActionState(createProductAction, undefined);
+
+  useEffect(() => {
+    if (state && "success" in state && state.success) {
+      window.location.href = state.redirectTo;
+    }
+  }, [state]);
 
   return (
     <form action={action} className="space-y-5">
